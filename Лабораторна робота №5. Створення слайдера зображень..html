@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Слайдер зображень</title>
+<style>
+  body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  .slider-container {
+    position: relative;
+    width: 80%;
+    max-width: 600px;
+    margin: 20px auto;
+    overflow: hidden;
+    border-radius: 10px;
+  }
+  .slides {
+    display: flex;
+    transition: transform 0.5s ease;
+  }
+  .slide {
+    min-width: 100%;
+    box-sizing: border-box;
+  }
+  .slide img {
+    width: 100%;
+    display: block;
+  }
+  .prev, .next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    z-index: 2;
+  }
+  .prev { left: 10px; }
+  .next { right: 10px; }
+  .dots {
+    text-align: center;
+    margin-top: 10px;
+  }
+  .dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin: 5px;
+    background: #bbb;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  .dot.active {
+    background: #333;
+  }
+  .controls {
+    text-align: center;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="slider-container">
+  <div class="slides">
+    <div class="slide"><img src="https://vogdog.com/wp-content/uploads/2024/10/a4731614e4c149dbd65691c434dedd56.jpg" alt="1"></div>
+    <div class="slide"><img src="https://www.myzoomag.com.ua/image/catalog/4704.jpg" alt="2"></div>
+    <div class="slide"><img src="https://images.prismic.io/doge/969221d4-45bd-4b72-9469-0c6809427c2f_2.jpg?auto=compress,format&rect=0,106,735,735&w=456&h=456" alt="3"></div>
+  </div>
+  <button class="prev">Назад</button>
+  <button class="next">Вперед</button>
+  <div class="dots"></div>
+  <div class="controls">
+    <button class="autoplay">Старт</button>
+    <span class="counter"></span>
+  </div>
+</div>
+
+<script>
+  class ImageSlider {
+    constructor(containerSelector) {
+      this.container = document.querySelector(containerSelector);
+      this.slides = this.container.querySelector('.slides');
+      this.slideItems = this.container.querySelectorAll('.slide');
+      this.prevBtn = this.container.querySelector('.prev');
+      this.nextBtn = this.container.querySelector('.next');
+      this.dotsContainer = this.container.querySelector('.dots');
+      this.autoplayBtn = this.container.querySelector('.autoplay');
+      this.counter = this.container.querySelector('.counter');
+
+      this.totalSlides = this.slideItems.length;
+      this.currentIndex = 0;
+      this.intervalId = null;
+
+      this.createDots();
+      this.updateSlide();
+      this.addEventListeners();
+    }
+
+    createDots() {
+      this.dotsContainer.innerHTML = '';
+      for (let i = 0; i < this.totalSlides; i++) {
+        const dot = document.createElement('span');
+        dot.classList.add('dot');
+        dot.addEventListener('click', () => this.goToSlide(i));
+        this.dotsContainer.appendChild(dot);
+      }
+    }
+
+    updateSlide() {
+      const offset = -this.currentIndex * 100;
+      this.slides.style.transform = `translateX(${offset}%)`;
+      this.updateDots();
+      this.updateCounter();
+    }
+
+    updateDots() {
+      const dots = this.dotsContainer.querySelectorAll('.dot');
+      dots.forEach(dot => dot.classList.remove('active'));
+      dots[this.currentIndex].classList.add('active');
+    }
+
+    updateCounter() {
+      this.counter.textContent = `${this.currentIndex + 1} / ${this.totalSlides}`;
+    }
+
+    nextSlide() {
+      this.currentIndex = (this.currentIndex + 1) % this.totalSlides;
+      this.updateSlide();
+    }
+
+    prevSlide() {
+      this.currentIndex = (this.currentIndex - 1 + this.totalSlides) % this.totalSlides;
+      this.updateSlide();
+    }
+
+    goToSlide(index) {
+      this.currentIndex = index;
+      this.updateSlide();
+    }
+
+    startAutoplay() {
+      if (!this.intervalId) {
+        this.intervalId = setInterval(() => this.nextSlide(), 3000);
+        this.autoplayBtn.textContent = 'Пауза';
+      } else {
+        clearInterval(this.intervalId);
+        this.intervalId = null;
+        this.autoplayBtn.textContent = 'Старт';
+      }
+    }
+
+    addEventListeners() {
+      this.nextBtn.addEventListener('click', () => this.nextSlide());
+      this.prevBtn.addEventListener('click', () => this.prevSlide());
+      this.autoplayBtn.addEventListener('click', () => this.startAutoplay());
+
+      // Swipe support
+      let startX = 0;
+      this.slides.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+      });
+      this.slides.addEventListener('touchend', (e) => {
+        let endX = e.changedTouches[0].clientX;
+        if (endX - startX > 50) this.prevSlide();
+        if (startX - endX > 50) this.nextSlide();
+      });
+
+      // Resize handler (adaptivity)
+      window.addEventListener('resize', () => this.updateSlide());
+    }
+  }
+
+  // Ініціалізація
+  document.addEventListener('DOMContentLoaded', () => {
+    const slider = new ImageSlider('.slider-container');
+  });
+</script>
+
+</body>
+</html>
